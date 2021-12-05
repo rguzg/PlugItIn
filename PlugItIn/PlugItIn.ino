@@ -6,6 +6,7 @@ const char *password = "luzbetra_internet!";
 
 WiFiClient client;
 WiFiEventHandler connectedEventListener;
+WiFiEventHandler disconnectedEventListener;
 
 void connectToWifi()
 {
@@ -38,7 +39,7 @@ void setup()
     Serial.println("Setting up your device...");
     Serial.begin(115200);
     pinMode(OUTPUT_PIN, OUTPUT);
-    WiFi.onSoftAPModeStationDisconnected(&disconnectionHandler);
+    disconnectedEventListener = WiFi.onSoftAPModeStationDisconnected(&disconnectionHandler);
     connectedEventListener = WiFi.onSoftAPModeStationConnected(&connectionHandler);
 
     connectToWifi();
