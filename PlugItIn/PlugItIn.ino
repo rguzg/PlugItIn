@@ -1,5 +1,7 @@
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
+#include <NTPClient.h>
+#include <WiFiUdp.h>
 #define OUTPUT_PIN 5
 
 const char *ssid = "Unova";
@@ -9,9 +11,11 @@ const char *mqtt_server = "broker.hivemq.com";
 void messageCallback(char *topic, byte *payload, unsigned int length);
 
 WiFiClient client;
+WiFiUDP ntpUDP;
 WiFiEventHandler connectedEventListener;
 WiFiEventHandler disconnectedEventListener;
 PubSubClient mqttClient = PubSubClient("broker.hivemq.com", 1883, *messageCallback, client);
+NTPClient timeClient(ntpUDP, "pool.ntp.org", 3600, 60000);
 boolean mqttConnected = false;
 boolean mqttSubscribed = false;
 
@@ -85,11 +89,11 @@ void setup()
     mqttClient.setCallback(messageCallback);
 
     connectToWifi();
+    timeClient.begin();
 }
 
 void loop()
 {
-
     if (!mqttConnected)
     {
         Serial.println("Connecting to MQTT server...");
