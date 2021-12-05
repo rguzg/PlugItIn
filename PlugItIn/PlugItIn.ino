@@ -38,3 +38,8 @@ void setup()
 
     connectToWifi();
 }
+
+void loop()
+{
+    Serial.println("Looks like we're looping...");
+}
