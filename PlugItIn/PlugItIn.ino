@@ -23,15 +23,15 @@ void connectToWifi()
     }
 }
 
-void disconnectionHandler(const WiFiEventSoftAPModeStationDisconnected &)
+void disconnectionHandler(const WiFiEventStationModeDisconnected &event)
 {
-    Serial.printf("Disconnected from %s \n", ssid);
+    Serial.printf("Disconnected from %s \n", event.ssid);
     connectToWifi();
 }
 
-void connectionHandler(const WiFiEventSoftAPModeStationConnected &)
+void connectionHandler(const WiFiEventStationModeConnected &event)
 {
-    Serial.printf("Connected to WiFi! %s \n", ssid);
+    Serial.printf("Connected to WiFi! %s \n", event.ssid);
 }
 
 void setup()
@@ -39,8 +39,8 @@ void setup()
     Serial.println("Setting up your device...");
     Serial.begin(115200);
     pinMode(OUTPUT_PIN, OUTPUT);
-    disconnectedEventListener = WiFi.onSoftAPModeStationDisconnected(&disconnectionHandler);
-    connectedEventListener = WiFi.onSoftAPModeStationConnected(&connectionHandler);
+    disconnectedEventListener = WiFi.onStationModeDisconnected(&disconnectionHandler);
+    connectedEventListener = WiFi.onStationModeConnected(&connectionHandler);
 
     connectToWifi();
 }
