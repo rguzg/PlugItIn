@@ -5,6 +5,7 @@ const char *ssid = "Unova";
 const char *password = "luzbetra_internet!";
 
 WiFiClient client;
+WiFiEventHandler connectedEventListener;
 
 void connectToWifi()
 {
@@ -19,8 +20,6 @@ void connectToWifi()
         delay(1000);
         Serial.print(".");
     }
-
-    Serial.printf("Connected to WiFi! %s \n", ssid);
 }
 
 void disconnectionHandler(const WiFiEventSoftAPModeStationDisconnected &)
@@ -29,12 +28,18 @@ void disconnectionHandler(const WiFiEventSoftAPModeStationDisconnected &)
     connectToWifi();
 }
 
+void connectionHandler(const WiFiEventSoftAPModeStationConnected &)
+{
+    Serial.printf("Connected to WiFi! %s \n", ssid);
+}
+
 void setup()
 {
     Serial.println("Setting up your device...");
     Serial.begin(115200);
     pinMode(OUTPUT_PIN, OUTPUT);
     WiFi.onSoftAPModeStationDisconnected(&disconnectionHandler);
+    connectedEventListener = WiFi.onSoftAPModeStationConnected(&connectionHandler);
 
     connectToWifi();
 }
