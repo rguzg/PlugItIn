@@ -31,6 +31,7 @@ void disconnectionHandler(const WiFiEventSoftAPModeStationDisconnected &)
 
 void setup()
 {
+    Serial.println("Setting up your device...");
     Serial.begin(115200);
     pinMode(OUTPUT_PIN, OUTPUT);
     WiFi.onSoftAPModeStationDisconnected(&disconnectionHandler);
