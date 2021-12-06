@@ -131,6 +131,26 @@ void messageCallback(char *topic, byte *payload, unsigned int length)
 
             break;
         }
+        case 5:
+        {
+            Serial.println("Deleting alarm");
+            int alarm_index = request["alarm_index"] | -1;
+
+            if (alarm_index != -1 && alarm_index < alarm_store.size())
+            {
+                alarm_store.erase(alarm_store.begin() + alarm_index);
+                response["type"] = 5;
+                response["status"] = 1;
+            }
+            else
+            {
+                Serial.println("Invalid Alarm Index");
+                response["type"] = 5;
+                response["status"] = 0;
+            }
+
+            break;
+        }
         default:
             Serial.println("???");
             break;
