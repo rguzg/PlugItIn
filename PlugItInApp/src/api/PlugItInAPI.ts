@@ -27,7 +27,7 @@ interface PlugItInAPIResponseSTATE_MODYFING extends PlugItInAPIResponse {
 
 export default class PlugItInAPI {
     #url: string;
-    #MQTTClient: any;
+    #MQTTClient: mqtt.MqttClient;
     #response: Promise<PlugItInAPIResponse>;
     isConnected: boolean;
     
@@ -53,14 +53,13 @@ export default class PlugItInAPI {
         this.#MQTTClient.publish('plugitin', '{type: 1}');
 
         let returnValue = new Promise<Boolean>((resolve, reject) => {
-            this.#MQTTClient.on("message", (topic: String, message:Uint8Array) => {
+            this.#MQTTClient.once("message", (topic: String, message:Uint8Array) => {
                 let parsed_message: PlugItInAPIResponseSTATE_MODYFING = JSON.parse(message.toString());
                 if(topic == "response"){
                     if(parsed_message.type == PlugItInAPIResponseType.TURN_ON && parsed_message.status){ 
                         resolve(true);
                     }
                 }
-
                 resolve(false);
             });
         });
@@ -74,7 +73,7 @@ export default class PlugItInAPI {
         this.#MQTTClient.publish('plugitin', '{type: 2}');
 
         let returnValue = new Promise<Boolean>((resolve, reject) => {
-            this.#MQTTClient.on("message", (topic: String, message:Uint8Array) => {
+            this.#MQTTClient.once("message", (topic: String, message:Uint8Array) => {
                 let parsed_message: PlugItInAPIResponseSTATE_MODYFING = JSON.parse(message.toString());
                 if(topic == "response"){
                     if(parsed_message.type == PlugItInAPIResponseType.TURN_OFF && parsed_message.status){ 
@@ -95,7 +94,7 @@ export default class PlugItInAPI {
         this.#MQTTClient.publish('plugitin', '{type: 3}');
 
         let returnValue = new Promise<Array<Number>>((resolve, reject) => {
-            this.#MQTTClient.on("message", (topic: String, message:Uint8Array) => {
+            this.#MQTTClient.once("message", (topic: String, message:Uint8Array) => {
                 let parsed_message: PlugItInAPIResponseGET_ALARM = JSON.parse(message.toString());
                 if(topic == "response"){
                     if(parsed_message.type == PlugItInAPIResponseType.GET_ALARM ){ 
@@ -118,7 +117,7 @@ export default class PlugItInAPI {
         this.#MQTTClient.publish('plugitin', `{type: 4, alarm_time: ${epoch_time}}`);
 
         let returnValue = new Promise<Boolean>((resolve, reject) => {
-            this.#MQTTClient.on("message", (topic: String, message:Uint8Array) => {
+            this.#MQTTClient.once("message", (topic: String, message:Uint8Array) => {
                 let parsed_message: PlugItInAPIResponseSTATE_MODYFING = JSON.parse(message.toString());
                 if(topic == "response"){
                     if(parsed_message.type == PlugItInAPIResponseType.SET_ALARM && parsed_message.status){ 
@@ -139,7 +138,7 @@ export default class PlugItInAPI {
         this.#MQTTClient.publish('plugitin', `{type: 5, alarm_id: ${id}}`);
 
         let returnValue = new Promise<Boolean>((resolve, reject) => {
-            this.#MQTTClient.on("message", (topic: String, message:Uint8Array) => {
+            this.#MQTTClient.once("message", (topic: String, message:Uint8Array) => {
                 let parsed_message: PlugItInAPIResponseSTATE_MODYFING = JSON.parse(message.toString());
                 if(topic == "response"){
                     if(parsed_message.type == PlugItInAPIResponseType.DELETE_ALARM && parsed_message.status){ 
@@ -160,7 +159,7 @@ export default class PlugItInAPI {
             this.#MQTTClient.publish('plugitin', '{type: 6}');
     
             let returnValue = new Promise<Number>((resolve, reject) => {
-                this.#MQTTClient.on("message", (topic: String, message:Uint8Array) => {
+                this.#MQTTClient.once("message", (topic: String, message:Uint8Array) => {
                     let parsed_message: PlugItInAPIResponseGET_TIME = JSON.parse(message.toString());
                     if(topic == "response"){
                         if(parsed_message.type == PlugItInAPIResponseType.GET_TIME ){ 
