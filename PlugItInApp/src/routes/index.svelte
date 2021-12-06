@@ -23,7 +23,7 @@
 
 <section>
 	{#if is_connected}
-		<LoadedUI />
+		<LoadedUI api={plugItIn}/>
 	{:else}
 		<div class="loading">
 			<DoubleBounce color="#444444"/>

@@ -1,15 +1,28 @@
 <script lang="ts">
 	import Switch from "svelte-switch";
     import TimePicker from "svelte-time-picker";
+	import { is_on } from "../stores/_stores";
+	import type PlugItIn from "../api/PlugItInAPI";
 
-	let isChecked = false;
+    export let api: PlugItIn;
+
     let modal = false;
     let alarms = ["3:00", "4:00", "5:00", "6:00"];
+
+    function handleSwitch(event){
+        is_on.set(event.detail.checked);
+        
+        if($is_on){
+            api.TurnOnDevice();
+        } else {
+            api.TurnOffDevice();
+        }
+    }
 </script>
 
 <div class="switch">
-    <Switch height=70 width=140 bind:checked={isChecked}></Switch>
-    <h3>Your product is: <b>{isChecked ? "on" : "off"}</b></h3>
+    <Switch height=70 width=140 checked={$is_on} on:change={handleSwitch}></Switch>
+    <h3>Your product is: <b>{$is_on ? "on" : "off"}</b></h3>
 </div>
 
 <div class="alarms">
