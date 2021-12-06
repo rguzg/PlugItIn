@@ -28,11 +28,13 @@ interface PlugItInAPIResponseSTATE_MODYFING extends PlugItInAPIResponse {
 export default class PlugItInAPI {
     #url: string;
     #MQTTClient: any;
+    #response: Promise<PlugItInAPIResponse>;
     isConnected: boolean;
     
     constructor(){
         this.#url = "ws://broker.mqttdashboard.com:8000/mqtt";
         this.#MQTTClient = mqtt.connect(this.#url);  
+        this.#response;
         this.isConnected = false;
 
         this.#MQTTClient.on("connect", () => {
@@ -44,5 +46,26 @@ export default class PlugItInAPI {
                 this.isConnected = true;
             });
         });
+    }
+
+    TurnOnDevice(): Promise<Boolean>{
+
+        this.#MQTTClient.publish('plugitin', '{type: 1}');
+
+        let returnValue = new Promise<Boolean>((resolve, reject) => {
+            this.#MQTTClient.on("message", (topic: String, message:Uint8Array) => {
+                let parsed_message: PlugItInAPIResponseSTATE_MODYFING = JSON.parse(message.toString());
+                if(topic == "response"){
+                    if(parsed_message.type == PlugItInAPIResponseType.TURN_ON && parsed_message.status){ 
+                        resolve(true);
+                    }
+                }
+
+                resolve(false);
+            });
+        });
+
+        return returnValue;
+
     }
 }
