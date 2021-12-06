@@ -158,6 +158,14 @@ void messageCallback(char *topic, byte *payload, unsigned int length)
 
             break;
         }
+        case 6:
+        {
+            Serial.println("Sending the current time");
+            time_t now = timeClient.getEpochTime();
+            response["type"] = 6;
+            response["time"] = now;
+            break;
+        }
         default:
             Serial.println("???");
             break;
