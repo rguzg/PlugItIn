@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Switch from "svelte-switch";
 	let isChecked = false;
-    let alarms = ["3:00", "4:00", "5:00", "6:00", "7:00"];
+    let alarms = ["3:00", "4:00", "5:00", "6:00"];
 </script>
 
 <div class="switch">
@@ -21,6 +21,9 @@
                 </div>
             {/each}
         </div>
+        {#if alarms.length < 5}
+            <img src="plus-circle-solid.svg" alt="Añadir" class="añadir"/>
+        {/if}
     {:else}
         <p>No alarms...</p>
     {/if}        
@@ -63,5 +66,10 @@
         height: 20px;
         margin-top: 10px;
         cursor: pointer;
+    }
+
+    .añadir{
+        height: 40px;
+        margin-top: 40px;
     }
 </style>
