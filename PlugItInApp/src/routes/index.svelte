@@ -6,7 +6,7 @@
 	import LoadedUI from "../components/LoadedUI.svelte";
 	import { DoubleBounce } from 'svelte-loading-spinners'
 	import PlugItIn from "../api/PlugItInAPI";
-	import { is_connected, is_on } from "../stores/_stores";
+	import { is_connected, is_on, alarms } from "../stores/_stores";
 
 	console.log($is_connected);
 	console.log($is_on);
@@ -14,6 +14,9 @@
 
 	if($is_connected) {
 		plugItIn.GetStatus().then(status => is_on.set(status));
+		plugItIn.GetAlarms().then(response => {
+			alarms.set(response);
+		});
 	}
 </script>
 

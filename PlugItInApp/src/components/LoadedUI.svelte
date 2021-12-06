@@ -1,13 +1,13 @@
 <script lang="ts">
 	import Switch from "svelte-switch";
     import TimePicker from "svelte-time-picker";
-	import { is_on } from "../stores/_stores";
+	import { is_on, alarms } from "../stores/_stores";
 	import type PlugItIn from "../api/PlugItInAPI";
 
     export let api: PlugItIn;
 
+    console.log($alarms);
     let modal = false;
-    let alarms = ["3:00", "4:00", "5:00", "6:00"];
 
     function handleSwitch(event){
         is_on.set(event.detail.checked);
@@ -27,9 +27,9 @@
 
 <div class="alarms">
     <h5>Alarms:</h5>
-    {#if alarms.length}
+    {#if $alarms.length}
         <div class="alarm-list">
-            {#each alarms as alarm}
+            {#each $alarms as alarm}
                 <div class="alarm">
                     <img src="clock-solid.svg" alt="Reloj"/>
                     {alarm}
@@ -37,7 +37,7 @@
                 </div>
             {/each}
         </div>
-        {#if alarms.length < 5}
+        {#if $alarms.length < 5}
             <img src="plus-circle-solid.svg" alt="Añadir" class="añadir" on:click={() => modal = true}/>
         {/if}
     {:else}
