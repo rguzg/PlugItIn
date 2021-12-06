@@ -50,6 +50,20 @@ void connectionHandler(const WiFiEventStationModeConnected &event)
     Serial.printf("Connected to WiFi! %s \n", event.ssid);
 }
 
+ArduinoJson6185_D1::StaticJsonDocument<160U> generateAlarmsJSON()
+{
+    StaticJsonDocument<JSON_ARRAY_SIZE(5)> alarms;
+
+    JsonArray alarms_array = alarms.to<JsonArray>();
+
+    for (int i = 0; i < alarm_store.size(); i++)
+    {
+        alarms.add(alarm_store.at(i));
+    }
+
+    return alarms;
+}
+
 void messageCallback(char *topic, byte *payload, unsigned int length)
 {
 
@@ -90,17 +104,9 @@ void messageCallback(char *topic, byte *payload, unsigned int length)
         case 3:
         {
             Serial.println("Sending the alarm history");
-            StaticJsonDocument<JSON_ARRAY_SIZE(5)> alarms;
-
-            JsonArray alarms_array = alarms.to<JsonArray>();
-
-            for (int i = 0; i < alarm_store.size(); i++)
-            {
-                alarms.add(alarm_store.at(i));
-            }
 
             response["type"] = 3;
-            response["alarms"] = alarms;
+            response["alarms"] = generateAlarmsJSON();
 
             // Let's pray to god that 200 is a big enough buffer size!
             char output[200];
@@ -108,6 +114,7 @@ void messageCallback(char *topic, byte *payload, unsigned int length)
             serializeJson(response, output);
             Serial.println(output);
             mqttClient.publish("response", output);
+
             break;
         }
         case 4:
@@ -208,4 +215,27 @@ void loop()
     }
 
     mqttClient.loop();
+
+    for (int i = 0; i < alarm_store.size(); i++)
+    {
+        long alarm_time = alarm_store.at(i);
+        if (timeClient.getEpochTime() - alarm_time > 0 && timeClient.getEpochTime() - alarm_time < 60)
+        {
+            Serial.printf("Alarm triggered! @ %s", String(alarm_time));
+            digitalWrite(OUTPUT_PIN, HIGH);
+            alarm_store.erase(alarm_store.begin() + i);
+
+            StaticJsonDocument<JSON_ARRAY_SIZE(5) + JSON_OBJECT_SIZE(3)> response;
+
+            response["type"] = 3;
+            response["alarms"] = generateAlarmsJSON();
+
+            // Let's pray to god that 200 is a big enough buffer size!
+            char output[200];
+
+            serializeJson(response, output);
+            Serial.println(output);
+            mqttClient.publish("response", output);
+        }
+    }
 }
