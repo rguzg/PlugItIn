@@ -235,7 +235,7 @@ void loop()
 
             StaticJsonDocument<JSON_ARRAY_SIZE(5) + JSON_OBJECT_SIZE(3)> response;
 
-            response["type"] = 3;
+            response["type"] = 7;
             response["alarms"] = generateAlarmsJSON();
 
             // Let's pray to god that 200 is a big enough buffer size!
