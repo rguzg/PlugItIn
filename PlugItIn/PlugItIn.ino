@@ -86,6 +86,10 @@ void messageCallback(char *topic, byte *payload, unsigned int length)
     {
         switch (type)
         {
+        case 0:
+            response["type"] = 0;
+            response["status"] = digitalRead(OUTPUT_PIN);
+            break;
         case 1:
 
             Serial.println("Turning on the relay");

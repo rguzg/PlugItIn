@@ -1,8 +1,9 @@
 import * as mqtt from "mqtt/dist/mqtt.min"
-import { alarms } from "../stores/_stores";
+import { alarms, is_on } from "../stores/_stores";
 
 enum PlugItInAPIResponseType{
-    TURN_ON = 1,
+    STATE,
+    TURN_ON,
     TURN_OFF,
     GET_ALARM,
     SET_ALARM,
@@ -24,7 +25,7 @@ interface PlugItInAPIResponseGET_TIME extends PlugItInAPIResponse {
 }
 
 interface PlugItInAPIResponseSTATE_MODYFING extends PlugItInAPIResponse {
-    status: Boolean
+    status: boolean
 }
 
 export default class PlugItInAPI {
@@ -32,7 +33,7 @@ export default class PlugItInAPI {
     #MQTTClient: mqtt.MqttClient;
     isConnected: boolean;
     
-    constructor(){
+    constructor(callback: Function){
         this.#url = "ws://broker.mqttdashboard.com:8000/mqtt";
         this.#MQTTClient = mqtt.connect(this.#url); 
         this.isConnected = false;
@@ -44,6 +45,7 @@ export default class PlugItInAPI {
                 }
 
                 this.isConnected = true;
+                callback();
             });
         });
 
@@ -52,9 +54,30 @@ export default class PlugItInAPI {
             if(topic == "response"){
                 if(parsed_message.type == PlugItInAPIResponseType.ALARM_FIRED){ 
                     alarms.set(parsed_message.alarms);
+                    is_on.set(true);
                 }
             }
         });
+    }
+
+    GetStatus(): Promise<boolean>{
+
+        this.#MQTTClient.publish('plugitin', '{type: 0}');
+
+        let returnValue = new Promise<boolean>((resolve, reject) => {
+            this.#MQTTClient.once("message", (topic: String, message:Uint8Array) => {
+                let parsed_message: PlugItInAPIResponseSTATE_MODYFING = JSON.parse(message.toString());
+                if(topic == "response"){
+                    if(parsed_message.type == PlugItInAPIResponseType.STATE && parsed_message.status){ 
+                        resolve(parsed_message.status);
+                    }
+                }
+                resolve(false);
+            });
+        });
+
+        return returnValue;
+
     }
 
     TurnOnDevice(): Promise<Boolean>{
@@ -121,7 +144,7 @@ export default class PlugItInAPI {
 
     NewAlarm(date: Date): Promise<Boolean>{
 
-        let epoch_time = String(date.getTime()).slice(0, -3);
+        let epoch_time = String(date.getTime() + 3600000).slice(0, -3);
 
         this.#MQTTClient.publish('plugitin', `{type: 4, alarm_time: ${epoch_time}}`);
 
@@ -142,9 +165,9 @@ export default class PlugItInAPI {
 
     }
 
-    DeleteAlarm(id: Number): Promise<Boolean>{
+    DeleteAlarm(id: number): Promise<Boolean>{
 
-        this.#MQTTClient.publish('plugitin', `{type: 5, alarm_id: ${id}}`);
+        this.#MQTTClient.publish('plugitin', `{"type": 5, "alarm_index": ${id}}`);
 
         let returnValue = new Promise<Boolean>((resolve, reject) => {
             this.#MQTTClient.once("message", (topic: String, message:Uint8Array) => {

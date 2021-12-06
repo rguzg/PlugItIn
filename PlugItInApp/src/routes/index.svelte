@@ -3,57 +3,51 @@
 </script>
 
 <script lang="ts">
-	import Counter from '$lib/Counter.svelte';
+	import LoadedUI from "../components/LoadedUI.svelte";
+	import { DoubleBounce } from 'svelte-loading-spinners'
+	import PlugItIn from "../api/PlugItInAPI";
+	import { is_connected, is_on, alarms } from "../stores/_stores";
+
+	console.log($is_connected);
+	console.log($is_on);
+	let plugItIn = new PlugItIn(() => is_connected.set(true));
+
+	if($is_connected) {
+		plugItIn.GetStatus().then(status => is_on.set(status));
+		plugItIn.GetAlarms().then(response => {
+			alarms.set(response);
+		});
+	}
 </script>
 
 <svelte:head>
-	<title>Home</title>
+	<title>PlugItIn!</title>
 </svelte:head>
 
 <section>
-	<h1>
-		<div class="welcome">
-			<picture>
-				<source srcset="svelte-welcome.webp" type="image/webp" />
-				<img src="svelte-welcome.png" alt="Welcome" />
-			</picture>
+	{#if is_connected}
+		<LoadedUI api={plugItIn}/>
+	{:else}
+		<div class="loading">
+			<DoubleBounce color="#444444"/>
+			<h3>Loading...</h3>
 		</div>
-
-		to your new<br />SvelteKit app
-	</h1>
-
-	<h2>
-		try editing <strong>src/routes/index.svelte</strong>
-	</h2>
-
-	<Counter />
+	{/if}
 </section>
 
 <style>
-	section {
+	section{
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		flex-direction: column;
+		height: 400px;
+	}
+
+	.loading{
 		display: flex;
 		flex-direction: column;
 		justify-content: center;
 		align-items: center;
-		flex: 1;
-	}
-
-	h1 {
-		width: 100%;
-	}
-
-	.welcome {
-		position: relative;
-		width: 100%;
-		height: 0;
-		padding: 0 0 calc(100% * 495 / 2048) 0;
-	}
-
-	.welcome img {
-		position: absolute;
-		width: 100%;
-		height: 100%;
-		top: 0;
-		display: block;
 	}
 </style>
