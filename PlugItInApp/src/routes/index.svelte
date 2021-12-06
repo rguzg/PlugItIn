@@ -5,7 +5,11 @@
 <script lang="ts">
 	import LoadedUI from "../components/LoadedUI.svelte";
 	import { DoubleBounce } from 'svelte-loading-spinners'
-	let hasLoaded = true;
+	import PlugItIn from "../api/PlugItInAPI";
+	import { is_connected } from "../stores/_stores";
+
+	console.log($is_connected);
+	let plugItIn = new PlugItIn(() => is_connected.set(true));
 </script>
 
 <svelte:head>
@@ -13,7 +17,7 @@
 </svelte:head>
 
 <section>
-	{#if hasLoaded}
+	{#if is_connected}
 		<LoadedUI />
 	{:else}
 		<div class="loading">

@@ -32,7 +32,7 @@ export default class PlugItInAPI {
     #MQTTClient: mqtt.MqttClient;
     isConnected: boolean;
     
-    constructor(){
+    constructor(callback: Function){
         this.#url = "ws://broker.mqttdashboard.com:8000/mqtt";
         this.#MQTTClient = mqtt.connect(this.#url); 
         this.isConnected = false;
@@ -44,6 +44,7 @@ export default class PlugItInAPI {
                 }
 
                 this.isConnected = true;
+                callback();
             });
         });
 
