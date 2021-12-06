@@ -3,6 +3,9 @@
 </script>
 
 <script lang="ts">
+	import Switch from "svelte-switch";
+	import LoadedUI from "../components/LoadedUI.svelte";
+	let isChecked = false;
 </script>
 
 <svelte:head>
@@ -10,8 +13,14 @@
 </svelte:head>
 
 <section>
+	<LoadedUI/>
 </section>
 
 <style>
-	
+	section{
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		height: 400px;
+	}
 </style>
