@@ -3,9 +3,9 @@
 </script>
 
 <script lang="ts">
-	import Switch from "svelte-switch";
 	import LoadedUI from "../components/LoadedUI.svelte";
-	let isChecked = false;
+	import { DoubleBounce } from 'svelte-loading-spinners'
+	let hasLoaded = true;
 </script>
 
 <svelte:head>
@@ -13,7 +13,14 @@
 </svelte:head>
 
 <section>
-	<LoadedUI/>
+	{#if hasLoaded}
+		<LoadedUI />
+	{:else}
+		<div class="loading">
+			<DoubleBounce color="#444444"/>
+			<h3>Loading...</h3>
+		</div>
+	{/if}
 </section>
 
 <style>
@@ -22,5 +29,12 @@
 		justify-content: center;
 		align-items: center;
 		height: 400px;
+	}
+
+	.loading{
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		align-items: center;
 	}
 </style>
