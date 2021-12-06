@@ -32,6 +32,14 @@
         let date = new Date(epoch * 1000);
         return date.getHours() + ":" + date.getMinutes();
     }
+
+    function DeleteAlarm(id){
+        api.DeleteAlarm(id).then(result => {
+            api.GetAlarms().then(response => {
+                alarms.set(response);
+            });
+        });
+    }
 </script>
 
 <div class="switch">
@@ -43,11 +51,11 @@
     <h5>Alarms:</h5>
     {#if $alarms.length}
         <div class="alarm-list">
-            {#each $alarms as alarm}
+            {#each $alarms as alarm,i}
                 <div class="alarm">
                     <img src="clock-solid.svg" alt="Reloj"/>
-                    {UnixEpochToTime(alarm)}
-                    <img src="trash-solid.svg" alt="Basura" class="basura"/>
+                    {UnixEpochToTime(alarm - 3600)}
+                    <img src="trash-solid.svg" alt="Basura" class="basura" on:click={() => DeleteAlarm(i)}/>
                 </div>
             {/each}
         </div>

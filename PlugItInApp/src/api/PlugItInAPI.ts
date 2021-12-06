@@ -1,5 +1,5 @@
 import * as mqtt from "mqtt/dist/mqtt.min"
-import { alarms } from "../stores/_stores";
+import { alarms, is_on } from "../stores/_stores";
 
 enum PlugItInAPIResponseType{
     STATE,
@@ -54,6 +54,7 @@ export default class PlugItInAPI {
             if(topic == "response"){
                 if(parsed_message.type == PlugItInAPIResponseType.ALARM_FIRED){ 
                     alarms.set(parsed_message.alarms);
+                    is_on.set(true);
                 }
             }
         });
@@ -143,7 +144,7 @@ export default class PlugItInAPI {
 
     NewAlarm(date: Date): Promise<Boolean>{
 
-        let epoch_time = String(date.getTime()).slice(0, -3);
+        let epoch_time = String(date.getTime() + 3600000).slice(0, -3);
 
         this.#MQTTClient.publish('plugitin', `{type: 4, alarm_time: ${epoch_time}}`);
 
@@ -164,9 +165,9 @@ export default class PlugItInAPI {
 
     }
 
-    DeleteAlarm(id: Number): Promise<Boolean>{
+    DeleteAlarm(id: number): Promise<Boolean>{
 
-        this.#MQTTClient.publish('plugitin', `{type: 5, alarm_id: ${id}}`);
+        this.#MQTTClient.publish('plugitin', `{"type": 5, "alarm_index": ${id}}`);
 
         let returnValue = new Promise<Boolean>((resolve, reject) => {
             this.#MQTTClient.once("message", (topic: String, message:Uint8Array) => {
