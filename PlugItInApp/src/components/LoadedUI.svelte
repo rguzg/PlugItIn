@@ -1,11 +1,29 @@
 <script lang="ts">
 	import Switch from "svelte-switch";
 	let isChecked = false;
+    let alarms = ["3:00", "4:00", "5:00", "6:00", "7:00"];
 </script>
 
 <div class="switch">
     <Switch height=70 width=140 bind:checked={isChecked}></Switch>
     <h3>Your product is: <b>{isChecked ? "on" : "off"}</b></h3>
+</div>
+
+<div class="alarms">
+    <h5>Alarms:</h5>
+    {#if alarms.length}
+        <div class="alarm-list">
+            {#each alarms as alarm}
+                <div class="alarm">
+                    <img src="clock-solid.svg" alt="Reloj"/>
+                    {alarm}
+                    <img src="trash-solid.svg" alt="Basura" class="basura"/>
+                </div>
+            {/each}
+        </div>
+    {:else}
+        <p>No alarms...</p>
+    {/if}        
 </div>
 
 <style>
@@ -18,4 +36,32 @@
 	.switch > h3{
 		margin-top: 30px;
 	}
+
+    .alarms{
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+    }
+
+    .alarm-list{
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-evenly;
+        width: 100%;
+    }
+
+    .alarm{
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .basura{
+        width: 20px;
+        height: 20px;
+        margin-top: 10px;
+        cursor: pointer;
+    }
 </style>

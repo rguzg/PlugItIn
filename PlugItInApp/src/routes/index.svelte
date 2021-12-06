@@ -26,8 +26,9 @@
 <style>
 	section{
 		display: flex;
-		justify-content: center;
+		justify-content: space-around;
 		align-items: center;
+		flex-direction: column;
 		height: 400px;
 	}
 
