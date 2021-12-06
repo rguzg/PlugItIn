@@ -53,30 +53,35 @@ void connectionHandler(const WiFiEventStationModeConnected &event)
 void messageCallback(char *topic, byte *payload, unsigned int length)
 {
 
+    String message;
+
     Serial.printf("Message arrived [%s] \n", topic);
     for (int i = 0; i < length; i++)
     {
         Serial.print((char)payload[i]);
+        message += char(payload[i]);
     }
-    Serial.println((char)payload[0]);
-    Serial.println(length);
-    Serial.println(length == 1);
 
-    if (length == 1)
+    DynamicJsonDocument request(JSON_ARRAY_SIZE(5) + JSON_OBJECT_SIZE(3));
+    DeserializationError err = deserializeJson(request, message);
+
+    int type = request["type"];
+
+    if (!err)
     {
-        switch ((char)payload[0])
+        switch (type)
         {
-        case '1':
+        case 1:
             Serial.println("Turning on the relay");
             alarm_store.push_back(timeClient.getEpochTime());
             Serial.println(alarm_store.at(0));
             digitalWrite(OUTPUT_PIN, HIGH);
             break;
-        case '2':
+        case 2:
             Serial.println("Turning off the relay");
             digitalWrite(OUTPUT_PIN, LOW);
             break;
-        case '3':
+        case 3:
         {
             Serial.println("Sending the alarm history");
             StaticJsonDocument<JSON_ARRAY_SIZE(5) + JSON_OBJECT_SIZE(3)> response;
@@ -89,7 +94,7 @@ void messageCallback(char *topic, byte *payload, unsigned int length)
                 alarms.add(alarm_store.at(i));
             }
 
-            response["URL"] = "/alarms";
+            response["type"] = 3;
             response["method"] = "GET";
             response["alarms"] = alarms;
 
@@ -102,6 +107,7 @@ void messageCallback(char *topic, byte *payload, unsigned int length)
             break;
         }
         default:
+            Serial.println("???");
             break;
         }
     }
