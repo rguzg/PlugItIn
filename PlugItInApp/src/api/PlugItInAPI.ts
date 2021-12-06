@@ -154,4 +154,25 @@ export default class PlugItInAPI {
         return returnValue;
 
     }
+
+    GetTime(): Promise<Number>{
+            
+            this.#MQTTClient.publish('plugitin', '{type: 6}');
+    
+            let returnValue = new Promise<Number>((resolve, reject) => {
+                this.#MQTTClient.on("message", (topic: String, message:Uint8Array) => {
+                    let parsed_message: PlugItInAPIResponseGET_TIME = JSON.parse(message.toString());
+                    if(topic == "response"){
+                        if(parsed_message.type == PlugItInAPIResponseType.GET_TIME ){ 
+                            resolve(parsed_message.time);
+                        }
+                    }
+    
+                    resolve(0);
+                });
+            });
+    
+            return returnValue;
+    
+    }
 }
