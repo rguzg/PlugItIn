@@ -68,4 +68,25 @@ export default class PlugItInAPI {
         return returnValue;
 
     }
+
+    TurnOffDevice(): Promise<Boolean>{
+
+        this.#MQTTClient.publish('plugitin', '{type: 2}');
+
+        let returnValue = new Promise<Boolean>((resolve, reject) => {
+            this.#MQTTClient.on("message", (topic: String, message:Uint8Array) => {
+                let parsed_message: PlugItInAPIResponseSTATE_MODYFING = JSON.parse(message.toString());
+                if(topic == "response"){
+                    if(parsed_message.type == PlugItInAPIResponseType.TURN_OFF && parsed_message.status){ 
+                        resolve(true);
+                    }
+                }
+
+                resolve(false);
+            });
+        });
+
+        return returnValue;
+
+    }
 }
