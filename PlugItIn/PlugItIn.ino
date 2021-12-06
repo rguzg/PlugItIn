@@ -73,8 +73,6 @@ void messageCallback(char *topic, byte *payload, unsigned int length)
         {
         case 1:
             Serial.println("Turning on the relay");
-            alarm_store.push_back(timeClient.getEpochTime());
-            Serial.println(alarm_store.at(0));
             digitalWrite(OUTPUT_PIN, HIGH);
             break;
         case 2:
@@ -95,8 +93,35 @@ void messageCallback(char *topic, byte *payload, unsigned int length)
             }
 
             response["type"] = 3;
-            response["method"] = "GET";
             response["alarms"] = alarms;
+
+            // Let's pray to god that 200 is a big enough buffer size!
+            char output[200];
+
+            serializeJson(response, output);
+            Serial.println(output);
+            mqttClient.publish("response", output);
+            break;
+        }
+        case 4:
+        {
+            Serial.println("Registering new alarm");
+            time_t alarm_time = request["alarm_time"] | -1;
+            StaticJsonDocument<JSON_OBJECT_SIZE(3)> response;
+
+            if (alarm_time != -1)
+            {
+                alarm_store.push_back(alarm_time);
+                Serial.println(alarm_time);
+                response["type"] = 3;
+                response["status"] = 1;
+            }
+            else
+            {
+                Serial.println("Invalid Alarm Time");
+                response["type"] = 3;
+                response["status"] = 0;
+            }
 
             // Let's pray to god that 200 is a big enough buffer size!
             char output[200];
