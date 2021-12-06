@@ -110,4 +110,27 @@ export default class PlugItInAPI {
         return returnValue;
 
     }
+
+    NewAlarm(date: Date): Promise<Boolean>{
+
+        let epoch_time = String(date.getTime()).slice(0, -3);
+
+        this.#MQTTClient.publish('plugitin', `{type: 4, alarm_time: ${epoch_time}}`);
+
+        let returnValue = new Promise<Boolean>((resolve, reject) => {
+            this.#MQTTClient.on("message", (topic: String, message:Uint8Array) => {
+                let parsed_message: PlugItInAPIResponseSTATE_MODYFING = JSON.parse(message.toString());
+                if(topic == "response"){
+                    if(parsed_message.type == PlugItInAPIResponseType.SET_ALARM && parsed_message.status){ 
+                        resolve(true);
+                    }
+                }
+
+                resolve(false);
+            });
+        });
+
+        return returnValue;
+
+    }
 }
