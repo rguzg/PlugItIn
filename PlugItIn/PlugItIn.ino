@@ -66,23 +66,30 @@ void messageCallback(char *topic, byte *payload, unsigned int length)
     DeserializationError err = deserializeJson(request, message);
 
     int type = request["type"];
+    StaticJsonDocument<JSON_ARRAY_SIZE(5) + JSON_OBJECT_SIZE(3)> response;
 
     if (!err)
     {
         switch (type)
         {
         case 1:
+
             Serial.println("Turning on the relay");
             digitalWrite(OUTPUT_PIN, HIGH);
+
+            response["type"] = 1;
+            response["status"] = 1;
             break;
         case 2:
             Serial.println("Turning off the relay");
             digitalWrite(OUTPUT_PIN, LOW);
+
+            response["type"] = 2;
+            response["status"] = 1;
             break;
         case 3:
         {
             Serial.println("Sending the alarm history");
-            StaticJsonDocument<JSON_ARRAY_SIZE(5) + JSON_OBJECT_SIZE(3)> response;
             StaticJsonDocument<JSON_ARRAY_SIZE(5)> alarms;
 
             JsonArray alarms_array = alarms.to<JsonArray>();
@@ -107,34 +114,33 @@ void messageCallback(char *topic, byte *payload, unsigned int length)
         {
             Serial.println("Registering new alarm");
             time_t alarm_time = request["alarm_time"] | -1;
-            StaticJsonDocument<JSON_OBJECT_SIZE(3)> response;
 
             if (alarm_time != -1)
             {
                 alarm_store.push_back(alarm_time);
                 Serial.println(alarm_time);
-                response["type"] = 3;
+                response["type"] = 4;
                 response["status"] = 1;
             }
             else
             {
                 Serial.println("Invalid Alarm Time");
-                response["type"] = 3;
+                response["type"] = 4;
                 response["status"] = 0;
             }
 
-            // Let's pray to god that 200 is a big enough buffer size!
-            char output[200];
-
-            serializeJson(response, output);
-            Serial.println(output);
-            mqttClient.publish("response", output);
             break;
         }
         default:
             Serial.println("???");
             break;
         }
+        // Let's pray to god that 200 is a big enough buffer size!
+        char output[200];
+
+        serializeJson(response, output);
+        Serial.println(output);
+        mqttClient.publish("response", output);
     }
 }
 
