@@ -1,3 +1,4 @@
+// Unix Epoch timestamps are stored in long long integers. This constant has to be defined for the JSON library to serialize them correctly.
 #define ARDUINOJSON_USE_LONG_LONG 1
 
 #include <ESP8266WiFi.h>
@@ -11,12 +12,14 @@
 const char *ssid = "Unova";
 const char *password = "luzbetra_internet!";
 const char *mqtt_server = "broker.hivemq.com";
+// Vector that stores the current active alarms in Unix Epoch time.
 std::vector<time_t> alarm_store;
 
 void messageCallback(char *topic, byte *payload, unsigned int length);
 
 WiFiClient client;
 WiFiUDP ntpUDP;
+// The event handlers need to be declared at the top level scope
 WiFiEventHandler connectedEventListener;
 WiFiEventHandler disconnectedEventListener;
 PubSubClient mqttClient = PubSubClient("broker.hivemq.com", 1883, *messageCallback, client);
@@ -24,6 +27,7 @@ NTPClient timeClient(ntpUDP, "pool.ntp.org", 3600, 60000);
 boolean mqttConnected = false;
 boolean mqttSubscribed = false;
 
+// Tries to connect to WiFi. Stays on a loop until connected.
 void connectToWifi()
 {
     Serial.println();
@@ -39,17 +43,20 @@ void connectToWifi()
     }
 }
 
+// Handler for disconnection events. Tries to reconnect to the Internet.
 void disconnectionHandler(const WiFiEventStationModeDisconnected &event)
 {
     Serial.printf("Disconnected from %s \n", event.ssid);
     connectToWifi();
 }
 
+// Handler for connection events. Prints the name of the WiFi network.
 void connectionHandler(const WiFiEventStationModeConnected &event)
 {
     Serial.printf("Connected to WiFi! %s \n", event.ssid);
 }
 
+// Returns a JSON Array with all of the active alarms in the alarm_store.
 ArduinoJson6185_D1::StaticJsonDocument<160U> generateAlarmsJSON()
 {
     StaticJsonDocument<JSON_ARRAY_SIZE(5)> alarms;
@@ -76,6 +83,8 @@ void messageCallback(char *topic, byte *payload, unsigned int length)
         message += char(payload[i]);
     }
 
+    // All requests are JSON objects. They have a type property and may have extra data. The allocated memory for the JSONs is allocated at
+    // compile time.
     DynamicJsonDocument request(JSON_ARRAY_SIZE(5) + JSON_OBJECT_SIZE(3));
     DeserializationError err = deserializeJson(request, message);
 
@@ -86,10 +95,12 @@ void messageCallback(char *topic, byte *payload, unsigned int length)
     {
         switch (type)
         {
+            // Return current status of the relay.
         case 0:
             response["type"] = 0;
             response["status"] = digitalRead(OUTPUT_PIN);
             break;
+            // Turn on the relay.
         case 1:
 
             Serial.println("Turning on the relay");
@@ -98,6 +109,7 @@ void messageCallback(char *topic, byte *payload, unsigned int length)
             response["type"] = 1;
             response["status"] = 1;
             break;
+            // Turn ff the relay.
         case 2:
             Serial.println("Turning off the relay");
             digitalWrite(OUTPUT_PIN, LOW);
@@ -105,6 +117,7 @@ void messageCallback(char *topic, byte *payload, unsigned int length)
             response["type"] = 2;
             response["status"] = 1;
             break;
+            // Returns a JSON with all the active alarms.
         case 3:
         {
             Serial.println("Sending the alarm history");
@@ -121,6 +134,7 @@ void messageCallback(char *topic, byte *payload, unsigned int length)
 
             break;
         }
+            // Registers a new alarm. alarm_time must be in Unix Epoch time and must be a time in the future.
         case 4:
         {
             Serial.println("Registering new alarm");
@@ -142,6 +156,7 @@ void messageCallback(char *topic, byte *payload, unsigned int length)
 
             break;
         }
+            // Deletes alarm at index.
         case 5:
         {
             Serial.println("Deleting alarm");
@@ -162,6 +177,7 @@ void messageCallback(char *topic, byte *payload, unsigned int length)
 
             break;
         }
+            // Sends the system's current time in Unix Epoc format
         case 6:
         {
             Serial.println("Sending the current time");
@@ -189,8 +205,11 @@ void setup()
     Serial.begin(115200);
 
     pinMode(OUTPUT_PIN, OUTPUT);
+
+    // The relay starts off.
     digitalWrite(OUTPUT_PIN, LOW);
 
+    // Binding callbacks to Event Handlers.
     disconnectedEventListener = WiFi.onStationModeDisconnected(&disconnectionHandler);
     connectedEventListener = WiFi.onStationModeConnected(&connectionHandler);
     mqttClient.setCallback(messageCallback);
@@ -201,6 +220,7 @@ void setup()
 
 void loop()
 {
+    // This function must be run periodically to keep the system's time accurate.
     timeClient.update();
 
     if (!mqttConnected)
@@ -218,6 +238,7 @@ void loop()
     if (!mqttSubscribed && mqttConnected)
     {
         Serial.println("Subscribing to topic...");
+        // Requests are sent through the plugitin topic.
         mqttSubscribed = mqttClient.subscribe("plugitin");
 
         if (mqttSubscribed)
@@ -226,8 +247,11 @@ void loop()
         }
     }
 
+    // This function must be run periodically to keep the system's connected to the MQTT server.
     mqttClient.loop();
 
+    // Every loop all alarms are checked. If an alarm expires in the next sixty seconds, the alarm is removed from the alarm_store
+    // and the relay is turned on.
     for (int i = 0; i < alarm_store.size(); i++)
     {
         long alarm_time = alarm_store.at(i);
@@ -239,6 +263,7 @@ void loop()
 
             StaticJsonDocument<JSON_ARRAY_SIZE(5) + JSON_OBJECT_SIZE(3)> response;
 
+            // Special response that indicates that an alarm has been fired.
             response["type"] = 7;
             response["alarms"] = generateAlarmsJSON();
 
