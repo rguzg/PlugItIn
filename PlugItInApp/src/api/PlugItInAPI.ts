@@ -1,4 +1,5 @@
 import * as mqtt from "mqtt/dist/mqtt.min"
+import { alarms } from "../stores/_stores";
 
 enum PlugItInAPIResponseType{
     TURN_ON = 1,
@@ -6,7 +7,8 @@ enum PlugItInAPIResponseType{
     GET_ALARM,
     SET_ALARM,
     DELETE_ALARM,
-    GET_TIME
+    GET_TIME,
+    ALARM_FIRED
 }
 
 interface PlugItInAPIResponse {
@@ -28,13 +30,11 @@ interface PlugItInAPIResponseSTATE_MODYFING extends PlugItInAPIResponse {
 export default class PlugItInAPI {
     #url: string;
     #MQTTClient: mqtt.MqttClient;
-    #response: Promise<PlugItInAPIResponse>;
     isConnected: boolean;
     
     constructor(){
         this.#url = "ws://broker.mqttdashboard.com:8000/mqtt";
-        this.#MQTTClient = mqtt.connect(this.#url);  
-        this.#response;
+        this.#MQTTClient = mqtt.connect(this.#url); 
         this.isConnected = false;
 
         this.#MQTTClient.on("connect", () => {
@@ -45,6 +45,15 @@ export default class PlugItInAPI {
 
                 this.isConnected = true;
             });
+        });
+
+        this.#MQTTClient.on("message", (topic: String, message:Uint8Array) => {
+            let parsed_message: PlugItInAPIResponseGET_ALARM = JSON.parse(message.toString());
+            if(topic == "response"){
+                if(parsed_message.type == PlugItInAPIResponseType.ALARM_FIRED){ 
+                    alarms.set(parsed_message.alarms);
+                }
+            }
         });
     }
 
