@@ -122,7 +122,7 @@ void messageCallback(char *topic, byte *payload, unsigned int length)
             Serial.println("Registering new alarm");
             time_t alarm_time = request["alarm_time"] | -1;
 
-            if (alarm_time != -1)
+            if (alarm_time != -1 && alarm_time - timeClient.getEpochTime() > 0)
             {
                 alarm_store.push_back(alarm_time);
                 Serial.println(alarm_time);
