@@ -133,4 +133,25 @@ export default class PlugItInAPI {
         return returnValue;
 
     }
+
+    DeleteAlarm(id: Number): Promise<Boolean>{
+
+        this.#MQTTClient.publish('plugitin', `{type: 5, alarm_id: ${id}}`);
+
+        let returnValue = new Promise<Boolean>((resolve, reject) => {
+            this.#MQTTClient.on("message", (topic: String, message:Uint8Array) => {
+                let parsed_message: PlugItInAPIResponseSTATE_MODYFING = JSON.parse(message.toString());
+                if(topic == "response"){
+                    if(parsed_message.type == PlugItInAPIResponseType.DELETE_ALARM && parsed_message.status){ 
+                        resolve(true);
+                    }
+                }
+
+                resolve(false);
+            });
+        });
+
+        return returnValue;
+
+    }
 }
