@@ -2,7 +2,8 @@ import * as mqtt from "mqtt/dist/mqtt.min"
 import { alarms } from "../stores/_stores";
 
 enum PlugItInAPIResponseType{
-    TURN_ON = 1,
+    STATE,
+    TURN_ON,
     TURN_OFF,
     GET_ALARM,
     SET_ALARM,
@@ -24,7 +25,7 @@ interface PlugItInAPIResponseGET_TIME extends PlugItInAPIResponse {
 }
 
 interface PlugItInAPIResponseSTATE_MODYFING extends PlugItInAPIResponse {
-    status: Boolean
+    status: boolean
 }
 
 export default class PlugItInAPI {
@@ -56,6 +57,26 @@ export default class PlugItInAPI {
                 }
             }
         });
+    }
+
+    GetStatus(): Promise<boolean>{
+
+        this.#MQTTClient.publish('plugitin', '{type: 0}');
+
+        let returnValue = new Promise<boolean>((resolve, reject) => {
+            this.#MQTTClient.once("message", (topic: String, message:Uint8Array) => {
+                let parsed_message: PlugItInAPIResponseSTATE_MODYFING = JSON.parse(message.toString());
+                if(topic == "response"){
+                    if(parsed_message.type == PlugItInAPIResponseType.STATE && parsed_message.status){ 
+                        resolve(parsed_message.status);
+                    }
+                }
+                resolve(false);
+            });
+        });
+
+        return returnValue;
+
     }
 
     TurnOnDevice(): Promise<Boolean>{
