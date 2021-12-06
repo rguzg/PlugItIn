@@ -18,6 +18,20 @@
             api.TurnOffDevice();
         }
     }
+
+    function handleOKButton(event){
+        api.NewAlarm(event.detail).then(result => {
+            modal=false;
+            api.GetAlarms().then(response => {
+                alarms.set(response);
+            });
+        });
+    }
+
+    function UnixEpochToTime(epoch: number){
+        let date = new Date(epoch * 1000);
+        return date.getHours() + ":" + date.getMinutes();
+    }
 </script>
 
 <div class="switch">
@@ -32,21 +46,21 @@
             {#each $alarms as alarm}
                 <div class="alarm">
                     <img src="clock-solid.svg" alt="Reloj"/>
-                    {alarm}
+                    {UnixEpochToTime(alarm)}
                     <img src="trash-solid.svg" alt="Basura" class="basura"/>
                 </div>
             {/each}
         </div>
-        {#if $alarms.length < 5}
-            <img src="plus-circle-solid.svg" alt="Añadir" class="añadir" on:click={() => modal = true}/>
-        {/if}
     {:else}
-        <p>No alarms...</p>
+    <p>No alarms...</p>
     {/if} 
+    {#if $alarms.length < 5}
+        <img src="plus-circle-solid.svg" alt="Añadir" class="añadir" on:click={() => modal = true}/>
+    {/if}
 </div>
 {#if modal}
     <div class="modal">
-        <TimePicker date={new Date()} options={{hasButtons:true}} on:cancel={() => modal = false} on:ok={(event) => {console.log(event.detail); modal=false;}}/>
+        <TimePicker date={new Date()} options={{hasButtons:true}} on:cancel={() => modal = false} on:ok={handleOKButton}/>
 
     </div>
 {/if}
