@@ -1,4 +1,5 @@
 import * as mqtt from "mqtt/dist/mqtt.min"
+import { EventEmitter } from "events";
 import { alarms, is_on } from "../stores/_stores";
 
 enum PlugItInAPIResponseType{
@@ -28,12 +29,14 @@ interface PlugItInAPIResponseSTATE_MODYFING extends PlugItInAPIResponse {
     status: boolean
 }
 
-export default class PlugItInAPI {
+export default class PlugItInAPI extends EventEmitter{
     #url: string;
     #MQTTClient: mqtt.MqttClient;
     isConnected: boolean;
     
     constructor(callback: Function){
+        super();
+
         this.#url = "ws://broker.mqttdashboard.com:8000/mqtt";
         this.#MQTTClient = mqtt.connect(this.#url); 
         this.isConnected = false;
