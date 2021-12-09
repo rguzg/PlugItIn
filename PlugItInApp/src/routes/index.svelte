@@ -7,10 +7,16 @@
 	import { DoubleBounce } from 'svelte-loading-spinners'
 	import PlugItIn from "../api/PlugItInAPI";
 	import { is_connected, is_on, alarms } from "../stores/_stores";
+	import { onMount } from "svelte";
 
 	console.log($is_connected);
 	console.log($is_on);
-	let plugItIn = new PlugItIn(() => is_connected.set(true));
+	let plugItIn;
+
+	onMount(() => {
+		plugItIn = new PlugItIn(() => is_connected.set(true));
+	});
+
 
 	if($is_connected) {
 		plugItIn.GetStatus().then(status => is_on.set(status));
