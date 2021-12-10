@@ -247,22 +247,25 @@ export default class PlugItInAPI extends EventEmitter {
 
     GetTime(): Promise<Number>{
             
-            this.#MQTTClient.publish('plugitin', '{type: 6}');
-    
-            let returnValue = new Promise<Number>((resolve, reject) => {
-                this.#MQTTClient.once("message", (topic: String, message:Uint8Array) => {
-                    let parsed_message: PlugItInAPIResponseGET_TIME = JSON.parse(message.toString());
-                    if(topic == "response"){
-                        if(parsed_message.type == ResponseTypes.GET_TIME ){ 
-                            resolve(parsed_message.time);
-                        }
-                    }
-    
-                    resolve(0);
-                });
-            });
-    
-            return returnValue;
+        this.#MQTTClient.publish('plugitin', '{type: 6}');
+
+        let returnValue = new Promise<Number>((resolve, reject) => {
+            let messageEventListener = (topic: String, message:Uint8Array) => {
+                if(topic == "response"){
+                    let parsed_message: TimeResponse = JSON.parse(message.toString());
+                    resolve(parsed_message.data.time);
+                }
+            }
+
+            this.#MQTTClient.once("message", messageEventListener);
+
+            setTimeout(() => {
+                this.#MQTTClient.removeListener("message", messageEventListener);
+                reject("MQTT Server connection timed out");
+            }, 5000);
+        });
+
+        return returnValue;
     
     }
 }
