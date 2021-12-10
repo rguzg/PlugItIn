@@ -90,9 +90,9 @@ export default class PlugItInAPI extends EventEmitter {
 
         this.#MQTTClient.on("message", (topic: String, message:Uint8Array) => {
             if(topic == "plugitin_subscription"){
-                let response: Subscription = JSON.parse(message.toString());
+                let subscription: Subscription = JSON.parse(message.toString());
         
-                this.#EventEmitter.emit(response.type, response.data);
+                this.#EventEmitter.emit(subscription.type, subscription.data);
             }
         });
     }
