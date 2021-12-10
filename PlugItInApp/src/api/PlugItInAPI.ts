@@ -22,6 +22,11 @@ interface Response {
     data: Alarms | Time | State
 }
 
+interface Subscription {
+    type: SubscriptionsTypes,
+    data: Alarms | State
+}
+
 interface Alarms {
     alarms: Array<Number>
 }
@@ -34,36 +39,42 @@ interface State {
     status: boolean
 }
 
-export default class PlugItInAPI {
+export default class PlugItInAPI extends EventEmitter {
     #url: string;
     #MQTTClient: mqtt.MqttClient;
     isConnected: boolean;
+    #EventEmitter: EventEmitter;
 
     constructor(){
+        super();
 
         this.#url = "ws://broker.mqttdashboard.com:8000/mqtt";
         this.#MQTTClient = mqtt.connect(this.#url); 
         this.isConnected = false;
+        this.#EventEmitter = new EventEmitter();
 
         this.#MQTTClient.on("connect", () => {
             this.#MQTTClient.subscribe('plugitin_response', (err) => {
                 if(err){
                     throw err;
                 }
-
-            this.isConnected = true;
             });
+
+            this.#MQTTClient.subscribe('plugitin_subscription', (err) => {
+                if(err){
+                    throw err;
+                }
+        
+            });
+            this.isConnected = true;
         });
 
         this.#MQTTClient.on("message", (topic: String, message:Uint8Array) => {
-            // This code will be replaced by subscrption logic
-            // let parsed_message: Response = JSON.parse(message.toString());
-            // if(topic == "response"){
-            //     if(parsed_message.type == ResponseTypes.){ 
-            //         alarms.set(parsed_message.alarms);
-            //         is_on.set(true);
-            //     }
-            // }
+            if(topic == "plugitin_subscription"){
+                let response: Subscription = JSON.parse(message.toString());
+        
+                this.#EventEmitter.emit(response.type, response.data);
+            }
         });
     }
 
