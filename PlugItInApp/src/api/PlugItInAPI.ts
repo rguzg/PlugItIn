@@ -17,15 +17,32 @@ enum SubscriptionsTypes{
     ALARM_STATE = "ALARM_STATE",
 }
 
-interface Response {
-    type: ResponseTypes,
-    data: Alarms | Time | State
+interface AlarmResponse {
+    type: ResponseTypes.GET_ALARM,
+    data: Alarms
 }
 
-interface Subscription {
-    type: SubscriptionsTypes,
-    data: Alarms | State
+interface StateResponse {
+    type: ResponseTypes.STATE | ResponseTypes.TURN_ON | ResponseTypes.TURN_OFF | ResponseTypes.SET_ALARM | ResponseTypes.DELETE_ALARM,
+    data: State
 }
+interface TimeResponse {
+    type: ResponseTypes.GET_TIME,
+    data: Time
+}
+
+type Response = AlarmResponse | StateResponse | TimeResponse;
+
+interface AlarmSubscription {
+    type: SubscriptionsTypes.ALARM_STATE,
+    data: Alarms
+}
+interface StateSubscription {
+    type: SubscriptionsTypes.POWER_STATE,
+    data: State
+}
+
+type Subscription = AlarmSubscription | StateSubscription;
 
 interface Alarms {
     alarms: Array<Number>
