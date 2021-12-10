@@ -56,10 +56,10 @@ interface State {
 }
 
 export default class PlugItInAPI extends EventEmitter {
-    #url: string;
-    #MQTTClient: mqtt.MqttClient;
+    readonly #url: string;
+    readonly #EventEmitter: EventEmitter;
+    readonly #MQTTClient: mqtt.MqttClient;
     isConnected: boolean;
-    #EventEmitter: EventEmitter;
 
     constructor(){
         super();
