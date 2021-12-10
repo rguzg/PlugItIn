@@ -67,6 +67,8 @@ export default class PlugItInAPI extends EventEmitter {
         
             });
             this.isConnected = true;
+
+            this.#EventEmitter.emit("connect");
         });
 
         this.#MQTTClient.on("message", (topic: String, message:Uint8Array) => {
