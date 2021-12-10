@@ -2,64 +2,68 @@ import * as mqtt from "mqtt/dist/mqtt.min"
 import { EventEmitter } from "events";
 import { alarms, is_on } from "../stores/_stores";
 
-enum PlugItInAPIResponseType{
-    STATE,
-    TURN_ON,
-    TURN_OFF,
-    GET_ALARM,
-    SET_ALARM,
-    DELETE_ALARM,
-    GET_TIME,
-    ALARM_FIRED
+enum ResponseTypes{
+    STATE = "STATE",
+    TURN_ON = "TURN_ON",
+    TURN_OFF = "TURN_OFF",
+    GET_ALARM = "GET_ALARM",
+    SET_ALARM = "SET_ALARM",
+    DELETE_ALARM = "DELETE_ALARM",
+    GET_TIME = "GET_TIME" 
 }
 
-interface PlugItInAPIResponse {
-    type: PlugItInAPIResponseType,
+enum SubscriptionsTypes{
+    POWER_STATE = "POWER_STATE",
+    ALARM_STATE = "ALARM_STATE",
 }
 
-interface PlugItInAPIResponseGET_ALARM extends PlugItInAPIResponse {
+interface Response {
+    type: ResponseTypes,
+    data: Alarms | Time | State
+}
+
+interface Alarms {
     alarms: Array<Number>
 }
 
-interface PlugItInAPIResponseGET_TIME extends PlugItInAPIResponse {
+interface Time {
     time: Number
 }
 
-interface PlugItInAPIResponseSTATE_MODYFING extends PlugItInAPIResponse {
+interface State {
     status: boolean
 }
 
-export default class PlugItInAPI extends EventEmitter{
+export default class PlugItInAPI {
     #url: string;
     #MQTTClient: mqtt.MqttClient;
     isConnected: boolean;
-    
-    constructor(callback: Function){
-        super();
+
+    constructor(){
 
         this.#url = "ws://broker.mqttdashboard.com:8000/mqtt";
         this.#MQTTClient = mqtt.connect(this.#url); 
         this.isConnected = false;
 
         this.#MQTTClient.on("connect", () => {
-            this.#MQTTClient.subscribe('response', (err) => {
+            this.#MQTTClient.subscribe('plugitin_response', (err) => {
                 if(err){
                     throw err;
                 }
 
-                this.isConnected = true;
-                callback();
+            this.isConnected = true;
             });
         });
 
         this.#MQTTClient.on("message", (topic: String, message:Uint8Array) => {
-            let parsed_message: PlugItInAPIResponseGET_ALARM = JSON.parse(message.toString());
-            if(topic == "response"){
-                if(parsed_message.type == PlugItInAPIResponseType.ALARM_FIRED){ 
-                    alarms.set(parsed_message.alarms);
-                    is_on.set(true);
-                }
-            }
+            // This code will be replaced by subscrption logic
+            // let parsed_message: Response = JSON.parse(message.toString());
+            // if(topic == "response"){
+            //     if(parsed_message.type == ResponseTypes.){ 
+            //         alarms.set(parsed_message.alarms);
+            //         is_on.set(true);
+            //     }
+            // }
         });
     }
 
@@ -69,9 +73,9 @@ export default class PlugItInAPI extends EventEmitter{
 
         let returnValue = new Promise<boolean>((resolve, reject) => {
             this.#MQTTClient.once("message", (topic: String, message:Uint8Array) => {
-                let parsed_message: PlugItInAPIResponseSTATE_MODYFING = JSON.parse(message.toString());
+                let parsed_message: Response = JSON.parse(message.toString());
                 if(topic == "response"){
-                    if(parsed_message.type == PlugItInAPIResponseType.STATE && parsed_message.status){ 
+                    if(parsed_message.type == ResponseTypes.STATE && parsed_message.status){ 
                         resolve(parsed_message.status);
                     }
                 }
@@ -91,7 +95,7 @@ export default class PlugItInAPI extends EventEmitter{
             this.#MQTTClient.once("message", (topic: String, message:Uint8Array) => {
                 let parsed_message: PlugItInAPIResponseSTATE_MODYFING = JSON.parse(message.toString());
                 if(topic == "response"){
-                    if(parsed_message.type == PlugItInAPIResponseType.TURN_ON && parsed_message.status){ 
+                    if(parsed_message.type == ResponseTypes.TURN_ON && parsed_message.status){ 
                         resolve(true);
                     }
                 }
@@ -111,7 +115,7 @@ export default class PlugItInAPI extends EventEmitter{
             this.#MQTTClient.once("message", (topic: String, message:Uint8Array) => {
                 let parsed_message: PlugItInAPIResponseSTATE_MODYFING = JSON.parse(message.toString());
                 if(topic == "response"){
-                    if(parsed_message.type == PlugItInAPIResponseType.TURN_OFF && parsed_message.status){ 
+                    if(parsed_message.type == ResponseTypes.TURN_OFF && parsed_message.status){ 
                         resolve(true);
                     }
                 }
@@ -132,7 +136,7 @@ export default class PlugItInAPI extends EventEmitter{
             this.#MQTTClient.once("message", (topic: String, message:Uint8Array) => {
                 let parsed_message: PlugItInAPIResponseGET_ALARM = JSON.parse(message.toString());
                 if(topic == "response"){
-                    if(parsed_message.type == PlugItInAPIResponseType.GET_ALARM ){ 
+                    if(parsed_message.type == ResponseTypes.GET_ALARM ){ 
                         resolve(parsed_message.alarms);
                     }
                 }
@@ -155,7 +159,7 @@ export default class PlugItInAPI extends EventEmitter{
             this.#MQTTClient.once("message", (topic: String, message:Uint8Array) => {
                 let parsed_message: PlugItInAPIResponseSTATE_MODYFING = JSON.parse(message.toString());
                 if(topic == "response"){
-                    if(parsed_message.type == PlugItInAPIResponseType.SET_ALARM && parsed_message.status){ 
+                    if(parsed_message.type == ResponseTypes.SET_ALARM && parsed_message.status){ 
                         resolve(true);
                     }
                 }
@@ -176,7 +180,7 @@ export default class PlugItInAPI extends EventEmitter{
             this.#MQTTClient.once("message", (topic: String, message:Uint8Array) => {
                 let parsed_message: PlugItInAPIResponseSTATE_MODYFING = JSON.parse(message.toString());
                 if(topic == "response"){
-                    if(parsed_message.type == PlugItInAPIResponseType.DELETE_ALARM && parsed_message.status){ 
+                    if(parsed_message.type == ResponseTypes.DELETE_ALARM && parsed_message.status){ 
                         resolve(true);
                     }
                 }
@@ -197,7 +201,7 @@ export default class PlugItInAPI extends EventEmitter{
                 this.#MQTTClient.once("message", (topic: String, message:Uint8Array) => {
                     let parsed_message: PlugItInAPIResponseGET_TIME = JSON.parse(message.toString());
                     if(topic == "response"){
-                        if(parsed_message.type == PlugItInAPIResponseType.GET_TIME ){ 
+                        if(parsed_message.type == ResponseTypes.GET_TIME ){ 
                             resolve(parsed_message.time);
                         }
                     }
